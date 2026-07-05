@@ -28,6 +28,10 @@ Done. Look in your project's `docs/` folder.
 | `docs/how-it-works.md` | a living explanation of your whole project, kept current every run |
 | `docs/map.html` | a visual map of your project; hover any part to see what it does in simple words |
 
+The map, generated for a real project:
+
+![map of a real project, hovering one box](assets/map-screenshot.png)
+
 Optional auto mode: a small hook runs `/vibediary` when a session ends, so the docs never fall behind. Setup is one snippet, see below.
 
 ## Auto mode (optional)
@@ -67,6 +71,7 @@ Claude Code already saves every session as a transcript file on your machine. vi
 - Reading good docs is not the same as understanding your code. vibediary shrinks the gap, it doesn't close it.
 - Each run costs tokens from your Claude Code plan, roughly one short task's worth.
 - Claude Code's transcript format is undocumented; a big Claude Code update could require a fix here.
+- The diary repeats what you typed in sessions. If you discussed keys, emails, or private plans there, they can end up in `docs/`. Review before publishing, or add `docs/` to `.gitignore`.
 
 ## License
 

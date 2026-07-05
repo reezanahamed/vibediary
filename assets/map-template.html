@@ -165,14 +165,28 @@ function drawEdges() {
     const a = nodeEls[edge.from], b = nodeEls[edge.to];
     if (!a || !b) continue;
     const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-    const leftToRight = rb.left >= ra.right;
-    const x1 = (leftToRight ? ra.right : ra.left) - wrap.left;
-    const y1 = ra.top + ra.height / 2 - wrap.top;
-    const x2 = (leftToRight ? rb.left : rb.right) - wrap.left;
-    const y2 = rb.top + rb.height / 2 - wrap.top;
-    const bend = Math.max(30, Math.abs(x2 - x1) / 2) * (leftToRight ? 1 : -1);
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", "M" + x1 + " " + y1 + " C" + (x1 + bend) + " " + y1 + ", " + (x2 - bend) + " " + y2 + ", " + x2 + " " + y2);
+    let d, x2, y2;
+    if (rb.left >= ra.right || rb.right <= ra.left) {
+      // horizontal: side to side with an S-curve
+      const forward = rb.left >= ra.right;
+      const x1 = (forward ? ra.right : ra.left) - wrap.left;
+      const y1 = ra.top + ra.height / 2 - wrap.top;
+      x2 = (forward ? rb.left : rb.right) - wrap.left;
+      y2 = rb.top + rb.height / 2 - wrap.top;
+      const bend = Math.max(30, Math.abs(x2 - x1) / 2) * (forward ? 1 : -1);
+      d = "M" + x1 + " " + y1 + " C" + (x1 + bend) + " " + y1 + ", " + (x2 - bend) + " " + y2 + ", " + x2 + " " + y2;
+    } else {
+      // stacked in the same column: connect vertically
+      const down = rb.top >= ra.bottom;
+      const x1 = ra.left + ra.width / 2 - wrap.left;
+      const y1 = (down ? ra.bottom : ra.top) - wrap.top;
+      x2 = rb.left + rb.width / 2 - wrap.left;
+      y2 = (down ? rb.top : rb.bottom) - wrap.top;
+      const bend = Math.max(16, Math.abs(y2 - y1) / 2) * (down ? 1 : -1);
+      d = "M" + x1 + " " + y1 + " C" + x1 + " " + (y1 + bend) + ", " + x2 + " " + (y2 - bend) + ", " + x2 + " " + y2;
+    }
+    path.setAttribute("d", d);
     path.setAttribute("fill", "none");
     path.setAttribute("stroke", "var(--line)");
     path.setAttribute("stroke-width", "1.6");
