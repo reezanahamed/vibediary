@@ -46,8 +46,7 @@ Claude Code fires a SessionEnd hook when a session finishes. Put this in the pro
         "hooks": [
           {
             "type": "command",
-            "command": "[ -n \"$VIBEDIARY_AUTO\" ] || VIBEDIARY_AUTO=1 claude -p \"/vibediary\" --permission-mode acceptEdits --allowedTools Bash",
-            "timeout": 600
+            "command": "[ -n \"$VIBEDIARY_AUTO\" ] || VIBEDIARY_AUTO=1 nohup claude -p \"/vibediary\" --permission-mode acceptEdits --allowedTools Bash >/dev/null 2>&1 &"
           }
         ]
       }
@@ -56,7 +55,7 @@ Claude Code fires a SessionEnd hook when a session finishes. Put this in the pro
 }
 ```
 
-The `VIBEDIARY_AUTO` guard matters: the hook itself starts a Claude session, and without the guard that session's end would fire the hook again, forever. With it, the inner session inherits the variable and stops the chain.
+Two parts of that line matter. The `VIBEDIARY_AUTO` guard: the hook itself starts a Claude session, and without the guard that session's end would fire the hook again, forever. With it, the inner session inherits the variable and stops the chain. The `nohup ... &`: it lets the update finish in the background. Without it, the run gets cut off when the closing session shuts down (tested: the docs came out half written).
 
 Honest cost note: every auto-run is a real Claude session and spends tokens from your plan, roughly a short task's worth each time. If you close sessions often, run `/vibediary` by hand instead.
 
