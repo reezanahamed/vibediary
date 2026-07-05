@@ -4,7 +4,7 @@ One command in Claude Code turns your sessions into a project diary, living docs
 
 ![demo](assets/demo.gif)
 
-A builder went viral for deleting 3 months of AI-generated code. The project worked, but he couldn't explain his own code anymore. Here's the thing: your code only holds the WHAT. The WHY (what you asked for, what broke, why things ended up this way) lives in your coding sessions, and normally it's lost the moment you close the terminal. vibediary reads your Claude Code sessions and writes that story down, in words a beginner can follow.
+After six months of vibe coding, one developer wrote up the damage: AI had written 60% of his code, the app worked, and he was rewriting it anyway, because he no longer understood his own project. Google's Addy Osmani calls this gap comprehension debt. Here's the thing: your code only holds the WHAT. The WHY (what you asked for, what broke, why things ended up this way) lives in your coding sessions, and normally it's lost the moment you close the terminal. vibediary reads your Claude Code sessions and writes that story down, in words a beginner can follow.
 
 ## Quickstart
 
