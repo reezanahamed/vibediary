@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project map</title>
+<style>
+  :root {
+    --bg: #0f1219;
+    --panel: #171c26;
+    --border: #2a3242;
+    --text: #e6e9f0;
+    --muted: #9aa3b5;
+    --line: #3d475c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px 48px;
+  }
+  header { max-width: 1100px; margin: 0 auto 8px; }
+  h1 { font-size: 26px; font-weight: 700; }
+  h1 .dim { color: var(--muted); font-weight: 400; }
+  .tagline { color: var(--muted); margin-top: 4px; }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  .hint b { color: var(--text); font-weight: 600; }
+
+  #wrap { position: relative; max-width: 1100px; margin: 24px auto 0; }
+  #edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #cols { position: relative; display: flex; gap: 56px; align-items: flex-start; }
+  .col { flex: 1; min-width: 150px; display: flex; flex-direction: column; gap: 18px; }
+  .col h2 {
+    font-size: 11px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 2px;
+  }
+  .node {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent, #6c8cff);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: default;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  .node:hover { transform: translateY(-2px); border-color: var(--accent, #6c8cff); }
+  .node .label { font-weight: 600; font-size: 15px; }
+  .node .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+  #tooltip {
+    position: fixed; z-index: 10; max-width: 320px;
+    background: #1d2433; border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 13.5px; line-height: 1.5; color: var(--text);
+    box-shadow: 0 8px 30px rgba(0,0,0,.45);
+    opacity: 0; pointer-events: none; transition: opacity .1s ease;
+  }
+  #tooltip.show { opacity: 1; }
+  #tooltip .t-label { font-weight: 700; margin-bottom: 4px; }
+
+  @media (max-width: 760px) {
+    #cols { flex-direction: column; gap: 28px; }
+    #edges { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1>
+  <p class="tagline" id="tagline"></p>
+  <p class="hint"><b>Hover any box</b> to see what that part does, in plain words.</p>
+</header>
+
+<div id="wrap">
+  <svg id="edges"></svg>
+  <div id="cols"></div>
+</div>
+<div id="tooltip"></div>
+
+<script>
+/* VIBEDIARY:DATA-START
+   Claude fills this object from the real project. Rules:
+   - columns flow left to right in the order things happen
+   - every node needs a desc in plain English (what it does and why it exists),
+     one or two sentences a beginner can follow
+   - sub is an optional short caption under the label (a filename fits well)
+   - edges connect node ids; keep only the connections that help understanding
+*/
+const project = {
+  name: "example-project",
+  tagline: "Replace me: one sentence saying what this project does for its user.",
+  columns: [
+    { title: "Input", accent: "#e0b45c", nodes: [
+      { id: "user", label: "You", sub: "a command", desc: "Replace me: where everything starts." }
+    ]},
+    { title: "Engine", accent: "#6c8cff", nodes: [
+      { id: "core", label: "Core logic", sub: "core.py", desc: "Replace me: what the main part actually does." },
+      { id: "helper", label: "Helper", sub: "helper.py", desc: "Replace me: what this part contributes." }
+    ]},
+    { title: "Output", accent: "#5cc98e", nodes: [
+      { id: "result", label: "The result", sub: "output file", desc: "Replace me: what the user gets at the end." }
+    ]}
+  ],
+  edges: [
+    { from: "user", to: "core" },
+    { from: "core", to: "helper" },
+    { from: "core", to: "result" }
+  ]
+};
+/* VIBEDIARY:DATA-END */
+
+const cols = document.getElementById("cols");
+const svg = document.getElementById("edges");
+const tooltip = document.getElementById("tooltip");
+const nodeEls = {};
+
+document.getElementById("title").innerHTML =
+  project.name + '<span class="dim">, mapped</span>';
+document.getElementById("tagline").textContent = project.tagline;
+document.title = project.name + " map";
+
+for (const col of project.columns) {
+  const div = document.createElement("div");
+  div.className = "col";
+  div.style.setProperty("--accent", col.accent || "#6c8cff");
+  const h = document.createElement("h2");
+  h.textContent = col.title;
+  div.appendChild(h);
+  for (const node of col.nodes) {
+    const box = document.createElement("div");
+    box.className = "node";
+    box.innerHTML = '<div class="label"></div>' + (node.sub ? '<div class="sub"></div>' : "");
+    box.querySelector(".label").textContent = node.label;
+    if (node.sub) box.querySelector(".sub").textContent = node.sub;
+    box.addEventListener("mousemove", e => showTip(e, node));
+    box.addEventListener("mouseleave", hideTip);
+    div.appendChild(box);
+    nodeEls[node.id] = box;
+  }
+  cols.appendChild(div);
+}
+
+function showTip(e, node) {
+  tooltip.innerHTML = '<div class="t-label"></div><div class="t-desc"></div>';
+  tooltip.querySelector(".t-label").textContent = node.label;
+  tooltip.querySelector(".t-desc").textContent = node.desc || "";
+  tooltip.classList.add("show");
+  const pad = 14;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  const r = tooltip.getBoundingClientRect();
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
+  tooltip.style.left = x + "px";
+  tooltip.style.top = y + "px";
+}
+function hideTip() { tooltip.classList.remove("show"); }
+
+function drawEdges() {
+  const wrap = document.getElementById("wrap").getBoundingClientRect();
+  svg.setAttribute("viewBox", "0 0 " + wrap.width + " " + wrap.height);
+  svg.innerHTML = "";
+  for (const edge of project.edges) {
+    const a = nodeEls[edge.from], b = nodeEls[edge.to];
+    if (!a || !b) continue;
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    const leftToRight = rb.left >= ra.right;
+    const x1 = (leftToRight ? ra.right : ra.left) - wrap.left;
+    const y1 = ra.top + ra.height / 2 - wrap.top;
+    const x2 = (leftToRight ? rb.left : rb.right) - wrap.left;
+    const y2 = rb.top + rb.height / 2 - wrap.top;
+    const bend = Math.max(30, Math.abs(x2 - x1) / 2) * (leftToRight ? 1 : -1);
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M" + x1 + " " + y1 + " C" + (x1 + bend) + " " + y1 + ", " + (x2 - bend) + " " + y2 + ", " + x2 + " " + y2);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "var(--line)");
+    path.setAttribute("stroke-width", "1.6");
+    svg.appendChild(path);
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", x2); dot.setAttribute("cy", y2); dot.setAttribute("r", "3.5");
+    dot.setAttribute("fill", "var(--line)");
+    svg.appendChild(dot);
+  }
+}
+drawEdges();
+addEventListener("resize", drawEdges);
+</script>
+</body>
+</html>
