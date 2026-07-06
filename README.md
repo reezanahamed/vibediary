@@ -32,6 +32,8 @@ The map, generated for a real project:
 
 ![map of a real project, hovering one box](assets/map-screenshot.png)
 
+Two safety rules are built in. The folder vibediary creates starts with its own `.gitignore`, so the diary stays out of your commits until you decide otherwise (delete `docs/.gitignore` to publish it). And if your project already uses `docs/` for something else, vibediary writes to `docs/vibediary/` instead and never touches your existing files.
+
 Optional auto mode: a small hook runs `/vibediary` when a session ends, so the docs never fall behind. Setup is one snippet, see below.
 
 ## Auto mode (optional)
@@ -70,7 +72,7 @@ Claude Code already saves every session as a transcript file on your machine. vi
 - Reading good docs is not the same as understanding your code. vibediary shrinks the gap, it doesn't close it.
 - Each run costs tokens from your Claude Code plan, roughly one short task's worth.
 - Claude Code's transcript format is undocumented; a big Claude Code update could require a fix here.
-- The diary repeats what you typed in sessions. If you discussed keys, emails, or private plans there, they can end up in `docs/`. Review before publishing, or add `docs/` to `.gitignore`.
+- The diary repeats what you typed in sessions. If you discussed keys, emails, or private plans there, they can end up in the diary. That's why the folder starts gitignored; review it before you ever publish it. If your docs folder feeds a documentation site (MkDocs, Sphinx), remember site builds ignore gitignore, so exclude the vibediary folder there too.
 
 ## License
 

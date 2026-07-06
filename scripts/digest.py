@@ -13,7 +13,9 @@ Stdlib only. No arguments needed for normal use:
     python3 digest.py --all     digest everything, ignore the state file
     python3 digest.py --mark    record current sessions as processed
 
-State lives in docs/.vibediary-state.json inside the project.
+Add --dir FOLDER to use an output folder other than docs (for projects
+whose docs folder belongs to something else, e.g. --dir docs/vibediary).
+State lives in FOLDER/.vibediary-state.json inside the project.
 """
 
 import json
@@ -40,20 +42,20 @@ def project_transcript_dir(cwd):
     return os.path.join(os.path.expanduser("~"), ".claude", "projects", encoded)
 
 
-def state_path(cwd):
-    return os.path.join(cwd, "docs", ".vibediary-state.json")
+def state_path(cwd, outdir):
+    return os.path.join(cwd, outdir, ".vibediary-state.json")
 
 
-def load_state(cwd):
+def load_state(cwd, outdir):
     try:
-        with open(state_path(cwd)) as f:
+        with open(state_path(cwd, outdir)) as f:
             return json.load(f)
     except (OSError, ValueError):
         return {"sessions": {}}
 
 
-def save_state(cwd, state):
-    path = state_path(cwd)
+def save_state(cwd, outdir, state):
+    path = state_path(cwd, outdir)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(state, f, indent=1)
@@ -213,6 +215,17 @@ def find_sessions(tdir):
 
 
 def main():
+    args = sys.argv[1:]
+    outdir = "docs"
+    if "--dir" in args:
+        i = args.index("--dir")
+        if i + 1 >= len(args):
+            print("--dir needs a folder, e.g. --dir docs/vibediary")
+            return
+        outdir = args[i + 1]
+        del args[i:i + 2]
+    mode = args[0] if args else ""
+
     cwd = os.getcwd()
     tdir = project_transcript_dir(cwd)
     paths = find_sessions(tdir)
@@ -226,9 +239,8 @@ def main():
         print("Transcript folder exists but holds no sessions yet: %s" % tdir)
         return
 
-    state = load_state(cwd)
+    state = load_state(cwd, outdir)
     recorded = state.get("sessions", {})
-    mode = sys.argv[1] if len(sys.argv) > 1 else ""
 
     sessions = []  # (id, path, data, status)
     for path in paths:
@@ -259,8 +271,8 @@ def main():
             if status in ("new", "updated"):
                 recorded[session_id] = {"lines": data["lines"], "digested": now}
         state["sessions"] = recorded
-        save_state(cwd, state)
-        print("Recorded %d session(s) in %s" % (len(recorded), state_path(cwd)))
+        save_state(cwd, outdir, state)
+        print("Recorded %d session(s) in %s" % (len(recorded), state_path(cwd, outdir)))
         return
 
     if mode == "--all":
